@@ -1,11 +1,9 @@
-#################################
-From virtualenv + pip to buildout
-#################################
+Peace of Mind
+clint ecker <me@clintecker>
+#############
 
-This project illustrates a recipe to switch from virtualenv + pip to buildout.
-
-* See http://www.marmelune.net/en/python/buildout/from-virtualenv-to-buildout/
-  for the content of the recipe.
-* See requirements.txt for the pip requirements file.
-* See buildout.cfg for a (commented) buildout configuration that reproduces
-  the virtualenv + pip procedure.
+* Validates SSL certificates
+* Validates domain records and warns if they will expire soon
+* Verifies that your mail servers are not blacklisted
+* Validates your robots.txt and sitemap.xml files
+* Verifies that your site is not infected with malware or being used for phishing
