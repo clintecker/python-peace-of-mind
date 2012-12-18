@@ -5,4 +5,6 @@
 # threshold, throw a warning or not.
 
 class DomainChecker(object):
-	pass
+	def __init__(self, domain_name):
+		self.domain_name = domain_name
+
