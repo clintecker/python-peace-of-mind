@@ -1,9 +1,10 @@
-# This file would contain classes such as
+"""
+SpamChecker
 
-# SpamChecker
-	# SpamhausIPSpamChecker
-	# SpamhausDomainSpamChecker
-	# SpamcopIPSpamChecker
+* SpamhausIPSpamChecker
+* SpamhausDomainSpamChecker
+* SpamcopIPSpamChecker
+"""
 
 class SpamChecker(object):
 	pass
