@@ -5,3 +5,6 @@
 #
 # Possibilities are expiration date, security levels, domain matching,
 # revocation lists.
+
+class CertificateChecker(object):
+	pass

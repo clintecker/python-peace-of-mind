@@ -6,5 +6,6 @@ class TestIinit(TestCase):
 		pass
 
 	def test_init(self):
-		print dir(peace_of_mind)
-		pass
+		for submodule in peace_of_mind.__all__:
+			m = __import__(submodule, fromlist=['peace_of_mind'])
+			assert m
