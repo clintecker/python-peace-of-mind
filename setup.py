@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "python-peace-of-mind",
-    version = "0.1",
+    version='0.1',
     url = 'http://github.com/clintecker/python-peace-of-mind',
     license = 'BSD',
     description = "A library for letting you sleep at night.",
