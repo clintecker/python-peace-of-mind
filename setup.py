@@ -18,7 +18,7 @@ setup(
     packages = find_packages('src'),
     package_dir = {'': 'src'},
 
-    install_requires = ['setuptools', 'spam-blocklists', 'whois'],
+    install_requires = ['setuptools', 'spam-blocklists', 'whois', 'requests'],
 
     classifiers = [
         'Development Status :: 4 - Beta',
