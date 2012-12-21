@@ -2,3 +2,5 @@ sphinx
 nose
 spam-blocklists
 whois
+backports.ssl_match_hostname
+python-dateutil

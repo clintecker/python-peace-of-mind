@@ -18,7 +18,14 @@ setup(
     packages = find_packages('src'),
     package_dir = {'': 'src'},
 
-    install_requires = ['setuptools', 'spam-blocklists', 'whois', 'requests'],
+    install_requires = [
+        'setuptools',
+        'spam-blocklists',
+        'whois',
+        'requests',
+        'backports.ssl_match_hostname',
+        'python-dateutil'
+        ],
 
     classifiers = [
         'Development Status :: 4 - Beta',
