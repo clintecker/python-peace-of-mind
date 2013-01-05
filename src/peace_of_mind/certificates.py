@@ -31,6 +31,8 @@ ERROR_STRINGS = {
 	ERROR_SSL_CERT_COULD_NOT_BE_OBTAINED: "certificate could not be obtained"
 }
 
+UTCTIME_FORMAT = "%Y%m%d%H%M%SZ"
+
 class CertificateChecker(object):
 	"""
 	Given an HTTPS web address, this code would obtain the SSL Certificate
@@ -128,6 +130,7 @@ class CertificateChecker(object):
 			if datetime.datetime.utcnow() < not_before:
 				return ERROR_SSL_CERT_NOT_YET_VALID
 		return False
+
 
 	def certificate_hostname_mismatch(self, certificate):
 		try:
