@@ -24,7 +24,7 @@ setup(
         'whois',
         'requests',
         'backports.ssl_match_hostname',
-        'python-dateutil'
+        'python-dateutil',
         ],
 
     classifiers = [

@@ -9,14 +9,6 @@ import datetime
 from backports.ssl_match_hostname import match_hostname, CertificateError
 
 
-class SSLCertificateError(Exception):
-	"""
-	Raised when an SSL Certificate fails validation
-	"""
-	def __init__(self, *args, **kwargs):
-		self.errors = kwargs.get('errors')
-
-
 ERROR_SSL_CERT_EXPIRED = 1
 ERROR_SSL_CERT_NOT_YET_VALID = 2
 ERROR_SSL_CERT_HOST_MISMATCH = 4
@@ -33,6 +25,19 @@ ERROR_STRINGS = {
 
 UTCTIME_FORMAT = "%Y%m%d%H%M%SZ"
 
+class SSLCertificateError(Exception):
+	"""
+	Raised when an SSL Certificate fails validation
+	"""
+	def __init__(self, *args, **kwargs):
+		"""
+		A bitfield indicating which errors were encountered.
+
+		`self.errors` will be set if an `errors` parameter is given when initialized.
+		"""
+		self.errors = kwargs.get('errors')
+
+
 class CertificateChecker(object):
 	"""
 	Given an HTTPS web address, this code would obtain the SSL Certificate
@@ -43,10 +48,11 @@ class CertificateChecker(object):
 	"""
 	def __init__(self, domain, ca_certs, port=443):
 		"""
-		`domain`:   a domain with a TLS server listening on a port
-		`ca_certs`:	the full path to a file containing a list of concatenated
-					PEM files for the Certificate Authorities you trust.
-		`port`:     the port the server is listening on, defaults to 443
+		Arguments:
+
+		* `domain`: A domain with a TLS server listening on a port.
+		* `ca_certs`: The full path to a file containing a list of concatenated PEM files for the Certificate Authorities you trust.
+		* `port`: The TCP port the server is listening on.
 		"""
 		self.domain       = domain
 		self.port         = port
@@ -56,13 +62,25 @@ class CertificateChecker(object):
 
 	@classmethod
 	def get_address(cls, domain, port=443):
+		"""
+		Returns an address tuple that can be passed to :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_sslsocket`
+
+		Arguments:
+
+		* `domain`: A fully qualified domain name.
+		* `port`: The TCP port to connect to.
+		"""
 		hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(domain)
 		return (ipaddrlist[0], port)
 
 
 	def get_sslsocket(self, check_ca=True):
 		"""
-		We need to return an unconnected socket
+		Initializes and returns an un-conncted SSL socket.
+
+		Arguments:
+
+		* `check_ca`: Indicates whether or not the SSL socket should be configured to validate against a Certificate Authority.
 		"""
 		sock = socket.socket()
 		if check_ca and self.ca_certs:
@@ -83,6 +101,15 @@ class CertificateChecker(object):
 
 
 	def get_certificate(self, check_ca=True):
+		"""
+		Retrieve the SSL certificate for the configured domain and port
+
+		Arguments:
+
+		* `check_ca`: Indicates whether or not the certificate should be validated against the Certificate Authorities
+
+		Returns a certificate object that can be used in validator methods.
+		"""
 		binary_certificate = None
 		decoded_certificate = None
 		address = CertificateChecker.get_address(self.domain, self.port)
@@ -116,6 +143,15 @@ class CertificateChecker(object):
 
 
 	def certificate_is_expired(self, certificate):
+		"""
+		Determines whether or not an SSL certificate has expired.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_EXPIRED` if the certificate has expired.
+		"""
 		if 'notAfter' in certificate:
 			not_after = parser.parse(certificate['notAfter']).replace(tzinfo=None)
 			now = datetime.datetime.utcnow()
@@ -125,6 +161,15 @@ class CertificateChecker(object):
 
 
 	def certificate_is_not_yet_valid(self, certificate):
+		"""
+		Determines whether or not an SSL certificate is not yet valid.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_NOT_YET_VALID` if the certificate has expired.
+		"""
 		if 'notBefore' in certificate:
 			not_before = parser.parse(certificate['notBefore']).replace(tzinfo=None)
 			if datetime.datetime.utcnow() < not_before:
@@ -133,6 +178,19 @@ class CertificateChecker(object):
 
 
 	def certificate_hostname_mismatch(self, certificate):
+		"""
+		Determines whether or not a given certificate matches the previously configured domain.
+
+		The `altSubjectName` property is checked first, taking into account the explicit and wildcard fields there.
+
+		If the `altSubjectName` property is not present, the `commonName` property of the `subject` field is checked.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_HOST_MISMATCH` if the certificate has expired.
+		"""
 		try:
 			match_hostname(certificate, self.domain)
 		except CertificateError:
@@ -141,6 +199,9 @@ class CertificateChecker(object):
 
 	@property
 	def verbose_checks(self):
+		"""
+		Returns a list of the validations to run on cerificates
+		"""
 		return [
 			self.certificate_is_expired,
 			self.certificate_is_not_yet_valid,
@@ -149,6 +210,15 @@ class CertificateChecker(object):
 
 
 	def full_error_string(self, errors):
+		"""
+		Converts an array of bitfield codes and produces human-readable error strings
+
+		Arguments:
+
+		* `errors`: An array of bitfields
+
+		Returns a list of human-readable error strings.
+		"""
 		error_strings = []
 		for errno, errstr in ERROR_STRINGS.iteritems():
 			if errors & errno:
@@ -157,6 +227,20 @@ class CertificateChecker(object):
 
 
 	def check(self):
+		"""
+		Obtains a domain's SSL certificate and executes a series of validations.
+
+		Either returns True or raises :py:exc:`~peace_of_mind.certificates.SSLCertificateError`. The raised exception instance has an `errors` property which contains a bitfield indicating which errors were encountered.  The `message` of the exception has a human-friendly version of what happened.
+
+		Currently the following things will be checked:
+
+		* Whether or not the SSL Certificate could be obtained
+		* Whether the certificate has already expired
+		* Whether the certificate is not yet valid
+		* Whether or not the certificate is valid for the given domain
+		* Whether or not the certificate's chain of trust can be verified
+
+		"""
 		certificate = None
 		certificate_valid = True
 		errors = 0

@@ -12,7 +12,3 @@ class TestMisc(TestCase):
 	def test_robots_txt_validator_basic(self):
 		checker = misc.RobotsTxtValidator()
 		assert checker
-
-	def test_sitemap_validator_basic(self):
-		checker = misc.SitemapValidator()
-		assert checker

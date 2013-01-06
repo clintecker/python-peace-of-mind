@@ -10,6 +10,7 @@
 	- SafeBrowsing API: https://developers.google.com/safe-browsing/
 * Robots.txt parsing "robotparser" library in stdlib
 	- Unsure whether or not this validates stuff
+	- reppy library by seomoz
 * Domain expiration
 	- http://code.google.com/p/pywhois/
 	- https://github.com/xen/whois

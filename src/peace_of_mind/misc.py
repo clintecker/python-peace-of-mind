@@ -5,12 +5,15 @@ This could be home to stuff like robots.txt and sitemaps.xml verification
 and other basic checks.  Like code for checking the IP resolution of a
 hostname that could be used to notify someone if a DNS record changes.
 """
+import socket
+from vendor import reppy
+
 
 class IPResolver(object):
-	pass
+	@staticmethod
+	def resolve(host):
+		return socket.gethostbyname(host)
 
-class RobotsTxtValidator(object):
-	pass
-
-class SitemapValidator(object):
-	pass
+class RobotsChecker(object):
+	def __init__(self, robots_txt_contents):
+		pass
