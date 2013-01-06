@@ -60,6 +60,62 @@ class CertificateChecker(object):
 		self._certificate = None
 
 
+	def _certificate_hostname_mismatch(self, certificate):
+		"""
+		Determines whether or not a given certificate matches the previously configured domain.
+
+		The `altSubjectName` property is checked first, taking into account the explicit and wildcard fields there.
+
+		If the `altSubjectName` property is not present, the `commonName` property of the `subject` field is checked.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_HOST_MISMATCH` if the certificate has expired.
+		"""
+		try:
+			match_hostname(certificate, self._domain)
+		except CertificateError:
+			return ERROR_SSL_CERT_HOST_MISMATCH
+		return False
+
+
+	def _certificate_is_not_yet_valid(self, certificate):
+		"""
+		Determines whether or not an SSL certificate is not yet valid.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_NOT_YET_VALID` if the certificate has expired.
+		"""
+		if 'notBefore' in certificate:
+			not_before = parser.parse(certificate['notBefore']).replace(tzinfo=None)
+			if datetime.datetime.utcnow() < not_before:
+				return ERROR_SSL_CERT_NOT_YET_VALID
+		return False
+
+
+	def _certificate_is_expired(self, certificate):
+		"""
+		Determines whether or not an SSL certificate has expired.
+
+		Arguments:
+
+		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
+
+		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_EXPIRED` if the certificate has expired.
+		"""
+		if 'notAfter' in certificate:
+			not_after = parser.parse(certificate['notAfter']).replace(tzinfo=None)
+			now = datetime.datetime.utcnow()
+			if now > not_after:
+				return ERROR_SSL_CERT_EXPIRED
+		return False
+
+
 	@classmethod
 	def _get_address(cls, domain, port=443):
 		"""
@@ -72,32 +128,6 @@ class CertificateChecker(object):
 		"""
 		hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(domain)
 		return (ipaddrlist[0], port)
-
-
-	def _get_sslsocket(self, check_ca=True):
-		"""
-		Initializes and returns an un-conncted SSL socket.
-
-		Arguments:
-
-		* `check_ca`: Indicates whether or not the SSL socket should be configured to validate against a Certificate Authority.
-		"""
-		sock = socket.socket()
-		if check_ca and self._ca_certs:
-			cert_reqs = ssl.CERT_REQUIRED
-			ca_certs = self._ca_certs
-		else:
-			cert_reqs = ssl.CERT_NONE
-			ca_certs = None
-
-		sslsocket = ssl.wrap_socket(
-			sock,
-			ssl_version=ssl.PROTOCOL_SSLv3,
-			cert_reqs=cert_reqs,
-			ca_certs=ca_certs
-			)
-
-		return sslsocket
 
 
 	def _get_certificate(self, check_ca=True):
@@ -142,71 +172,30 @@ class CertificateChecker(object):
 		return decoded_certificate
 
 
-	def _certificate_is_expired(self, certificate):
+	def _get_sslsocket(self, check_ca=True):
 		"""
-		Determines whether or not an SSL certificate has expired.
+		Initializes and returns an un-conncted SSL socket.
 
 		Arguments:
 
-		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
-
-		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_EXPIRED` if the certificate has expired.
+		* `check_ca`: Indicates whether or not the SSL socket should be configured to validate against a Certificate Authority.
 		"""
-		if 'notAfter' in certificate:
-			not_after = parser.parse(certificate['notAfter']).replace(tzinfo=None)
-			now = datetime.datetime.utcnow()
-			if now > not_after:
-				return ERROR_SSL_CERT_EXPIRED
-		return False
+		sock = socket.socket()
+		if check_ca and self._ca_certs:
+			cert_reqs = ssl.CERT_REQUIRED
+			ca_certs = self._ca_certs
+		else:
+			cert_reqs = ssl.CERT_NONE
+			ca_certs = None
 
+		sslsocket = ssl.wrap_socket(
+			sock,
+			ssl_version=ssl.PROTOCOL_SSLv3,
+			cert_reqs=cert_reqs,
+			ca_certs=ca_certs
+			)
 
-	def _certificate_is_not_yet_valid(self, certificate):
-		"""
-		Determines whether or not an SSL certificate is not yet valid.
-
-		Arguments:
-
-		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
-
-		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_NOT_YET_VALID` if the certificate has expired.
-		"""
-		if 'notBefore' in certificate:
-			not_before = parser.parse(certificate['notBefore']).replace(tzinfo=None)
-			if datetime.datetime.utcnow() < not_before:
-				return ERROR_SSL_CERT_NOT_YET_VALID
-		return False
-
-
-	def _certificate_hostname_mismatch(self, certificate):
-		"""
-		Determines whether or not a given certificate matches the previously configured domain.
-
-		The `altSubjectName` property is checked first, taking into account the explicit and wildcard fields there.
-
-		If the `altSubjectName` property is not present, the `commonName` property of the `subject` field is checked.
-
-		Arguments:
-
-		* `certificate`: A certificate object as returned by :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_certificate`
-
-		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_HOST_MISMATCH` if the certificate has expired.
-		"""
-		try:
-			match_hostname(certificate, self._domain)
-		except CertificateError:
-			return ERROR_SSL_CERT_HOST_MISMATCH
-		return False
-
-	@property
-	def _verbose_checks(self):
-		"""
-		Returns a list of the validations to run on cerificates
-		"""
-		return [
-			self._certificate_is_expired,
-			self._certificate_is_not_yet_valid,
-			self._certificate_hostname_mismatch
-		]
+		return sslsocket
 
 
 	def _full_error_string(self, errors):
@@ -224,6 +213,18 @@ class CertificateChecker(object):
 			if errors & errno:
 				error_strings.append(errstr)
 		return ", ".join(error_strings)
+
+
+	@property
+	def _verbose_checks(self):
+		"""
+		Returns a list of the validations to run on cerificates
+		"""
+		return [
+			self._certificate_is_expired,
+			self._certificate_is_not_yet_valid,
+			self._certificate_hostname_mismatch
+		]
 
 
 	def check(self):
