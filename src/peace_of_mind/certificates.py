@@ -54,14 +54,14 @@ class CertificateChecker(object):
 		* `ca_certs`: The full path to a file containing a list of concatenated PEM files for the Certificate Authorities you trust.
 		* `port`: The TCP port the server is listening on.
 		"""
-		self.domain       = domain
-		self.port         = port
-		self.ca_certs     = ca_certs
+		self._domain       = domain
+		self._port         = port
+		self._ca_certs     = ca_certs
 		self._certificate = None
 
 
 	@classmethod
-	def get_address(cls, domain, port=443):
+	def _get_address(cls, domain, port=443):
 		"""
 		Returns an address tuple that can be passed to :py:meth:`~peace_of_mind.certificates.CertificateChecker.get_sslsocket`
 
@@ -74,7 +74,7 @@ class CertificateChecker(object):
 		return (ipaddrlist[0], port)
 
 
-	def get_sslsocket(self, check_ca=True):
+	def _get_sslsocket(self, check_ca=True):
 		"""
 		Initializes and returns an un-conncted SSL socket.
 
@@ -83,9 +83,9 @@ class CertificateChecker(object):
 		* `check_ca`: Indicates whether or not the SSL socket should be configured to validate against a Certificate Authority.
 		"""
 		sock = socket.socket()
-		if check_ca and self.ca_certs:
+		if check_ca and self._ca_certs:
 			cert_reqs = ssl.CERT_REQUIRED
-			ca_certs = self.ca_certs
+			ca_certs = self._ca_certs
 		else:
 			cert_reqs = ssl.CERT_NONE
 			ca_certs = None
@@ -100,7 +100,7 @@ class CertificateChecker(object):
 		return sslsocket
 
 
-	def get_certificate(self, check_ca=True):
+	def _get_certificate(self, check_ca=True):
 		"""
 		Retrieve the SSL certificate for the configured domain and port
 
@@ -112,8 +112,8 @@ class CertificateChecker(object):
 		"""
 		binary_certificate = None
 		decoded_certificate = None
-		address = CertificateChecker.get_address(self.domain, self.port)
-		ssl_socket = self.get_sslsocket(check_ca=check_ca)
+		address = CertificateChecker._get_address(self._domain, self._port)
+		ssl_socket = self._get_sslsocket(check_ca=check_ca)
 		err = None
 
 		try:
@@ -142,7 +142,7 @@ class CertificateChecker(object):
 		return decoded_certificate
 
 
-	def certificate_is_expired(self, certificate):
+	def _certificate_is_expired(self, certificate):
 		"""
 		Determines whether or not an SSL certificate has expired.
 
@@ -160,7 +160,7 @@ class CertificateChecker(object):
 		return False
 
 
-	def certificate_is_not_yet_valid(self, certificate):
+	def _certificate_is_not_yet_valid(self, certificate):
 		"""
 		Determines whether or not an SSL certificate is not yet valid.
 
@@ -177,7 +177,7 @@ class CertificateChecker(object):
 		return False
 
 
-	def certificate_hostname_mismatch(self, certificate):
+	def _certificate_hostname_mismatch(self, certificate):
 		"""
 		Determines whether or not a given certificate matches the previously configured domain.
 
@@ -192,24 +192,24 @@ class CertificateChecker(object):
 		Returns False or :py:const:`~peace_of_mind.certificates.ERROR_SSL_CERT_HOST_MISMATCH` if the certificate has expired.
 		"""
 		try:
-			match_hostname(certificate, self.domain)
+			match_hostname(certificate, self._domain)
 		except CertificateError:
 			return ERROR_SSL_CERT_HOST_MISMATCH
 		return False
 
 	@property
-	def verbose_checks(self):
+	def _verbose_checks(self):
 		"""
 		Returns a list of the validations to run on cerificates
 		"""
 		return [
-			self.certificate_is_expired,
-			self.certificate_is_not_yet_valid,
-			self.certificate_hostname_mismatch
+			self._certificate_is_expired,
+			self._certificate_is_not_yet_valid,
+			self._certificate_hostname_mismatch
 		]
 
 
-	def full_error_string(self, errors):
+	def _full_error_string(self, errors):
 		"""
 		Converts an array of bitfield codes and produces human-readable error strings
 
@@ -246,7 +246,7 @@ class CertificateChecker(object):
 		errors = 0
 
 		try:
-			certificate = self.get_certificate()
+			certificate = self._get_certificate()
 		except ssl.SSLError, e:
 			certificate_valid = False
 			ssl_errno = e.errno
@@ -259,17 +259,17 @@ class CertificateChecker(object):
 					errors |= ERROR_SSL_CERT_UNTRUSTED_AUTHORITY
 
 				# Get the certificated and bypass any crypto validation
-				certificate = self.get_certificate(check_ca=False)
+				certificate = self._get_certificate(check_ca=False)
 
 		if certificate:
-			for check_fn in self.verbose_checks:
+			for check_fn in self._verbose_checks:
 				error_code = check_fn(certificate)
 				if error_code:
 					certificate_valid = False
 					errors |= error_code
 
 		if not certificate_valid:
-			e = SSLCertificateError("The certificate is not valid: {}".format(self.full_error_string(errors)), errors=errors)
+			e = SSLCertificateError("The certificate is not valid: {}".format(self._full_error_string(errors)), errors=errors)
 			raise e
 
 		return certificate_valid

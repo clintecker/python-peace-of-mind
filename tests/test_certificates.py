@@ -18,11 +18,11 @@ class TestCertificates(TestCase):
 			domain=self._test_domain,
 			ca_certs=self._ca_cert_path
 			)
-		self._original_get_certificate = self.checker.get_certificate
+		self._original_get_certificate = self.checker._get_certificate
 
 
 	def tearDown(self):
-		self.checker.get_certificate = self._original_get_certificate
+		self.checker._get_certificate = self._original_get_certificate
 
 
 	def _get_default_not_before(self):
@@ -59,7 +59,7 @@ class TestCertificates(TestCase):
 		def mock_get_certificate(*args, **kwargs):
 			error = SSLError(8, "Certificate is unavailble")
 			raise error
-		self.checker.get_certificate = mock_get_certificate
+		self.checker._get_certificate = mock_get_certificate
 
 
 	def _setup_self_signed_certificate(self):
@@ -70,13 +70,13 @@ class TestCertificates(TestCase):
 				raise error
 			else:
 				return self._get_mock_certificate()
-		self.checker.get_certificate = mock_get_certificate
+		self.checker._get_certificate = mock_get_certificate
 
 
 	def _setup_mock_certificate(self, mock_certificate):
 		def mock_get_certificate(*args, **kwargs):
 			return mock_certificate
-		self.checker.get_certificate = mock_get_certificate
+		self.checker._get_certificate = mock_get_certificate
 
 
 	def test_certificate_checker_basic(self):

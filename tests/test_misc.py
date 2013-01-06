@@ -10,5 +10,5 @@ class TestMisc(TestCase):
 		assert checker
 
 	def test_robots_txt_validator_basic(self):
-		checker = misc.RobotsTxtValidator()
+		checker = misc.RobotsChecker("")
 		assert checker
