@@ -15,17 +15,17 @@ Peace of Mind uses Buildout to facilitate development which includes testing.
 The first line below will get buildout boostrapped and the second will install
 all the dependencies of the library and get everything ready.
 
-# `python buildout.py`
-# `./bin/buildout`
+* `python buildout.py`
+* `./bin/buildout`
 
 To run tests:
 
-# `./bin/nosetests`
+* `./bin/nosetests`
 
 To open a Python shell with the library loaded:
 
-# `./bin/python`
+* `./bin/python`
 
 To generate documentation:
 
-# `./bin/sphinx-build -b html ./docs ./docs/_build/`
+* `./bin/sphinx-build -b html ./docs ./docs/_build/`
