@@ -1,5 +1,7 @@
 # Peace of Mind
+
 Clint Ecker <me@clintecker>
+
 ---------------------------
 
 This is a set of tools, arranged as a single library that helps someone keep
