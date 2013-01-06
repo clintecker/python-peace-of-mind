@@ -13,13 +13,18 @@ startups, and enterprise customers full faith that their assets are being
 monitored and will be alerted, ahead of time if possible, that their
 core assets are at risk or have been altered.
 
+### License
+
+Peace of Mind was writted by Clint Ecker <me@clintecker.com> and is
+licensed under the MIT license (see LICENSE file).
+
 ### Installing
 
 Please see `CONTRIBUTING.md`
 
 ### Documentation
 
-Documentation lives in ./docs/_build
+Documentation lives in ./docs/ as reStructuredText files
 
 ### Tools that exist now:
 
