@@ -10,5 +10,13 @@ class TestMisc(TestCase):
 		assert checker
 
 	def test_robots_txt_validator_basic(self):
-		checker = misc.RobotsChecker("")
+		data = """# robots.txt for http://www.example.com/
+
+User-agent: *
+Disallow: /cyberworld/map/ # This is an infinite virtual URL space
+Disallow: /tmp/ # these will soon disappear
+Disallow: /foo.html"""
+
+		checker = misc.RobotsChecker.init_from_string(data)
+		print checker.allowed('/cool.html?pow=cool')
 		assert checker
